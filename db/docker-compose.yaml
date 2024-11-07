@@ -1,0 +1,15 @@
+services:
+  db:
+    build: ./db
+    container_name: postgres
+    environment:
+      POSTGRES_USER: API_ADMIN
+      POSTGRES_PASSWORD: gfityf_voul_4586
+      POSTGRES_DB: DATA_BASE_API
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+volumes:
+  db_data:
