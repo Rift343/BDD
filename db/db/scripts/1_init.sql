@@ -13,14 +13,14 @@ CREATE TABLE Entities (
     EntityName VARCHAR(100) NOT NULL,
     BIC CHAR(11) UNIQUE,
     Address TEXT,
-    Country VARCHAR(50),
+    Country VARCHAR(100),
     YearOfJoiningSWIFT INT CHECK (YearOfJoiningSWIFT BETWEEN 1900 AND EXTRACT(YEAR FROM CURRENT_DATE)),
-    LegalJurisdiction VARCHAR(50),
+    LegalJurisdiction VARCHAR(100),
     Email VARCHAR(100),
     PhoneNumber VARCHAR(20),
     FraudPreventionContact VARCHAR(100),
     BeneficialOwner VARCHAR(100),
-    Language VARCHAR(50),
+    Language VARCHAR(100),
     BusinessEntityType VARCHAR(20) CHECK (BusinessEntityType IN ('Corporate', 'State Owned', 'Privately Owned', 'Publicly Owned')),
     ISICCode VARCHAR(10),
     LegalEntityIdentifier VARCHAR(20) UNIQUE,
@@ -56,10 +56,10 @@ CREATE TABLE Time (
 -- Dimension: TransactionType
 CREATE TABLE TransactionType (
     TransactionID SERIAL PRIMARY KEY,
-    TransactionName VARCHAR(50),
-    TransactionType VARCHAR(50),
+    TransactionName VARCHAR(100),
+    TransactionType VARCHAR(100),
     Description TEXT,
-    Category VARCHAR(50),
+    Category VARCHAR(100),
     Status VARCHAR(20),
     TaxRate DECIMAL(5, 2),
     CategoryTime VARCHAR(20) CHECK (CategoryTime IN ('Realtime', 'Neartime', 'T', 'T+1', 'T+X')),
@@ -72,9 +72,9 @@ CREATE TABLE TransactionType (
 CREATE TABLE Asset (
     AssetID SERIAL PRIMARY KEY,
     AssetType VARCHAR(20) CHECK (AssetType IN ('Currency', 'Security')),
-    AssetName VARCHAR(50),
+    AssetName VARCHAR(100),
     UnitDivisibility DECIMAL(18, 8), -- Support for divisibility in financial assets
-    CountryOfOrigin VARCHAR(50),
+    CountryOfOrigin VARCHAR(100),
     LegalStatus BOOLEAN, -- TRUE if allowed to trade, FALSE otherwise
     ExchangeRateToUSD DECIMAL(18, 8),
     IssuerOrganizationName VARCHAR(100),
@@ -91,15 +91,15 @@ CREATE TABLE Server (
     ServerName VARCHAR(100),
     IPAddress INET UNIQUE,
     Location VARCHAR(100),
-    Cluster VARCHAR(50),
-    OperatingSystem VARCHAR(50),
+    Cluster VARCHAR(100),
+    OperatingSystem VARCHAR(100),
     CPUCores INT CHECK (CPUCores > 0),
     MemoryCapacity INT CHECK (MemoryCapacity > 0), -- in GB
     ECCMemory BOOLEAN,
     StorageCapacity INT CHECK (StorageCapacity > 0), -- in GB
     NetworkBandwidth INT CHECK (NetworkBandwidth > 0), -- in Mbps
-    Manufacturer VARCHAR(50),
-    ServerRole VARCHAR(50),
+    Manufacturer VARCHAR(100),
+    ServerRole VARCHAR(100),
     Environment VARCHAR(20) CHECK (Environment IN ('Production', 'Test', 'Development'))
 );
 
@@ -107,11 +107,11 @@ CREATE TABLE Server (
 CREATE TABLE Service (
     ServiceID SERIAL PRIMARY KEY,
     ServiceName VARCHAR(100),
-    ServiceType VARCHAR(50),
+    ServiceType VARCHAR(100),
     CriticalityLevel VARCHAR(10) CHECK (CriticalityLevel IN ('High', 'Medium', 'Low')),
     Description TEXT,
     IsRedundant BOOLEAN,
-    Vendor VARCHAR(50),
+    Vendor VARCHAR(100),
     Environment VARCHAR(20) CHECK (Environment IN ('Production', 'Test', 'Development')),
     CybersecurityExposure TEXT,
     IsPubliclyAccessible BOOLEAN
@@ -141,3 +141,33 @@ CREATE TABLE Incident (
     IncidentDuration INTERVAL, -- Additive measure for incident duration
     Description TEXT -- Optional description of the incident
 );
+
+CREATE VIEW TWENTYTHREEANDTWO AS 
+SELECT D.FiscalYear, D.Quarter 
+FROM Messages M, Date D, Entities E 
+WHERE E.country IN ('Germany', 'France', 'Spain', 'Italy', 'Netherlands',
+    'Belgium', 'Austria', 'Poland', 'Sweden', 'Greece',
+    'Portugal', 'Denmark', 'Ireland', 'Finland', 'Cyprus',
+    'Estonia', 'Hungary', 'Latvia', 'Lithuania', 'Luxembourg',
+    'Malta', 'Romania', 'Slovakia', 'Slovenia', 'Bulgaria',
+    'Croatia', 'Czech Republic') 
+AND D.FiscalYear BETWEEN 2022 AND 2023;
+
+CREATE VIEW MESSAGE_CHINA AS 
+	SELECT M.FactID,D.Month,D.Year 
+	FROM Messages M, Date D, Entities E 
+	WHERE E.Country = 'China' AND M.DateID = D.DateID AND (M.EntityReceiverID=E.EntityID OR M.EntitySenderID=E.EntityID);
+
+CREATE VIEW JOIN_ENTITY_MESSAGE AS
+	SELECT M.FactID,E.Country,D.Month,D.Year,D.Quarter
+	FROM MESSAGES M, Entities E,Date D
+	WHERE (M.EntitySenderID = E.EntityID OR M.EntityReceiverID = E.EntityID) AND M.DateID = D.DateID;
+
+CREATE VIEW JOIN_MESSAGE_ASSET AS
+	SELECT M.FactID,A.AssetID,A.AssetName
+	FROM Messages M, Asset A
+	WHERE M.AssetID = A.AssetID;
+
+
+
+

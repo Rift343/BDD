@@ -253,6 +253,7 @@ def populate_database():
     insert_asset()
     insert_server()
     insert_service()
+    conn.commit()
     insert_messages()
     insert_incident()
     conn.commit()
