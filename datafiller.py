@@ -1,3 +1,4 @@
+from math import floor
 import psycopg2
 from faker import Faker
 import random
@@ -94,19 +95,21 @@ def insert_date_dimension(start_date, num_days=365):
     end_date = min(start_date + timedelta(days=num_days), datetime.today())
     
     current_date = start_date
+    
     while current_date <= end_date:
+        month =random.randint(1,12)
         cur.execute("""
             INSERT INTO Date (FullDate, Year, Month, Day, FiscalYear, Holiday, DayOfWeek, Quarter)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """, (
             current_date,
-            current_date.year,
-            current_date.month,
+            random.randint(2022,2024),
+            month,
             current_date.day,
             current_date.year,  # Assuming fiscal year aligns with calendar year
             fake.boolean(chance_of_getting_true=10),  # 10% chance of being a holiday
             current_date.strftime('%A'),
-            (current_date.month - 1) // 3 + 1
+            (month-1)//3 + 1
         ))
         current_date += timedelta(days=1)  # Increment to the next day
 

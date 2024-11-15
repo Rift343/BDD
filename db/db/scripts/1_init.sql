@@ -152,8 +152,8 @@ WHERE E.country IN ('Germany', 'France', 'Spain', 'Italy', 'Netherlands',
     'Estonia', 'Hungary', 'Latvia', 'Lithuania', 'Luxembourg',
     'Malta', 'Romania', 'Slovakia', 'Slovenia', 'Bulgaria',
     'Croatia', 'Czech Republic') 
-    AND D.FiscalYear BETWEEN 2022 AND 2023
-    GROUP BY(D.FiscalYear,D.Quarter);
+    AND (D.FiscalYear BETWEEN 2022 AND 2023) AND
+    M.DateID = D.DateID AND M.EntitySenderID = E.EntityID
     ;
 
 CREATE VIEW MESSAGE_CHINA AS 
