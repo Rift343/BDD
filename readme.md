@@ -1,14 +1,10 @@
 #Etape 1:
-Lancer le conteneur docker. Pour cela vous devez avoir docker et docker compose installé (docker --version et docker compose --version pour vérifier).
-Ensuite lancer le fichier de script situer dans le repertoire db. C'est fichier de script lancer conteneur automatiquement.
-Il y a une fichier .bat si vous utilisez Windows et un fichier .sh si vous utilisez Linux
+Lancer le conteneur Docker. Pour cela, vous devez avoir Docker et Docker Compose installés (docker --version et docker compose --version pour vérifier). Ensuite, lancez le fichier de script situé dans le répertoire db. Ce fichier de script lancera le conteneur automatiquement. Il y a un fichier .bat si vous utilisez Windows et un fichier .sh si vous utilisez Linux.
 
 #Etape 2:
-Lancer le fichier de script python situé à la racine du projet. Il ce peut que vous deviez installer des dépandances via pip.
-Ce processus peut prendre beaucoup de temps
+Lancer le fichier de script Python situé à la racine du projet. Il se peut que vous deviez installer des dépendances via pip. Ce processus peut prendre beaucoup de temps.
 
- ## Désormais tout est initialiser et vous pouvez lancer les commandes suivantes pour entrer des commandes dans la base de donnée
- 
+## Désormais, tout est initialisé et vous pouvez lancer les commandes suivantes pour entrer des commandes dans la base de données : 
  # Pour vous connecter via les lignes de commandes au conteneur docker
  docker exec -it postgres /bin/bash
 
