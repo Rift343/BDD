@@ -139,10 +139,11 @@ CREATE TABLE Incident (
     DateID INT NOT NULL REFERENCES Date(DateID),
     TimeID INT NOT NULL REFERENCES Time(TimeID),
     IncidentDuration INTERVAL, -- Additive measure for incident duration
-    Description TEXT -- Optional description of the incident
+    Description TEXT, -- Optional description of the incident
+	SEVERITY INT
 );
 
-CREATE VIEW TWENTYTHREEANDTWO AS 
+CREATE MATERIALIZED VIEW TWENTYTHREEANDTWO AS 
 SELECT D.FiscalYear, D.Quarter 
 FROM Messages M, Date D, Entities E 
 WHERE E.country IN ('Germany', 'France', 'Spain', 'Italy', 'Netherlands',
@@ -151,7 +152,9 @@ WHERE E.country IN ('Germany', 'France', 'Spain', 'Italy', 'Netherlands',
     'Estonia', 'Hungary', 'Latvia', 'Lithuania', 'Luxembourg',
     'Malta', 'Romania', 'Slovakia', 'Slovenia', 'Bulgaria',
     'Croatia', 'Czech Republic') 
-AND D.FiscalYear BETWEEN 2022 AND 2023;
+    AND D.FiscalYear BETWEEN 2022 AND 2023
+    GROUP BY(D.FiscalYear,D.Quarter);
+    ;
 
 CREATE VIEW MESSAGE_CHINA AS 
 	SELECT M.FactID,D.Month,D.Year 
@@ -159,7 +162,7 @@ CREATE VIEW MESSAGE_CHINA AS
 	WHERE E.Country = 'China' AND M.DateID = D.DateID AND (M.EntityReceiverID=E.EntityID OR M.EntitySenderID=E.EntityID);
 
 CREATE VIEW JOIN_ENTITY_MESSAGE AS
-	SELECT M.FactID,E.Country,D.Month,D.Year,D.Quarter
+	SELECT M.FactID,E.Country,D.Month,D.Year,D.Quarter,E.EntityName
 	FROM MESSAGES M, Entities E,Date D
 	WHERE (M.EntitySenderID = E.EntityID OR M.EntityReceiverID = E.EntityID) AND M.DateID = D.DateID;
 
@@ -168,6 +171,58 @@ CREATE VIEW JOIN_MESSAGE_ASSET AS
 	FROM Messages M, Asset A
 	WHERE M.AssetID = A.AssetID;
 
+CREATE VIEW JOIN_MESSAGE_TYPE_WITH_DATE AS
+	SELECT D.FiscalYear, D.Quarter, T.TransactionType
+	FROM Messages M, Date D, TransactionType T 
+	WHERE M.TransactionTypeID = T.TransactionID AND M.DateID=D.DateID;
+
+CREATE OR REPLACE FUNCTION NB_ASSET(PARAM1 INTEGER)
+RETURNS INTEGER AS $$
+DECLARE NB INTEGER;
+BEGIN
+    SELECT COUNT(*) INTO NB FROM JOIN_MESSAGE_ASSET j WHERE j.AssetID = PARAM1;
+    RETURN NB;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE MATERIALIZED VIEW groupByServiceAndFact AS 
+SELECT S.ServiceName,COUNT(*) 
+FROM Incident I, Service S 
+GROUP BY(ServiceName);
+
+CREATE MATERIALIZED VIEW Incident_groupBy_Sev AS
+SELECT SEVERITY,AVG(IncidentDuration)
+FROM  Incident GROUP BY (Severity) ;
+
+CREATE MATERIALIZED VIEW TOTAL_DUREE_INCIDENT_SERVICE AS 
+SELECT S.ServiceName, SUM(I.IncidentDuration) AS totalDuration  
+FROM Incident I 
+JOIN Service S ON I.ServiceID = S.ServiceID 
+GROUP BY(S.ServiceName);
 
 
+SELECT Month, Year, COUNT(*) messages_chine FROM MESSAGE_CHINA GROUP BY (Month,Year);
 
+SELECT* FROM Incident_groupBy_Sev;
+
+SELECT * FROM groupByServiceAndFact;
+
+SELECT AssetID,AssetName,NB_ASSET(AssetID) FROM JOIN_MESSAGE_ASSET GROUP BY(AssetID,AssetName);
+
+SELECT JOIN_MESSAGE_TYPE_WITH_DATE.FiscalYear, JOIN_MESSAGE_TYPE_WITH_DATE.Quarter, JOIN_MESSAGE_TYPE_WITH_DATE.TransactionType, COUNT(*) 
+FROM JOIN_MESSAGE_TYPE_WITH_DATE 
+GROUP BY(JOIN_MESSAGE_TYPE_WITH_DATE.FiscalYear, JOIN_MESSAGE_TYPE_WITH_DATE.Quarter, JOIN_MESSAGE_TYPE_WITH_DATE.TransactionType);
+
+SELECT Year, Month , COUNT(*) messages_BCE 
+FROM JOIN_ENTITY_MESSAGE   
+WHERE EntityName = 'European Central Bank' GROUP BY (Year, Month);
+
+SELECT Country, COUNT(*) AS transactions_messages 
+FROM JOIN_ENTITY_MESSAGE 
+GROUP BY(Country);
+
+SELECT D.FiscalYear, D.Quarter, COUNT(*) as NBMESSAGE 
+FROM Messages M, Date D WHERE  (D.FiscalYear BETWEEN 2021 AND 2023) AND D.DateID = M.DateID
+GROUP BY(D.FiscalYear,D.Quarter);
+
+SELECT SUM(totalDuration) / 60  FROM TOTAL_DUREE_INCIDENT_SERVICE WHERE ServiceName = 'Swift Network';

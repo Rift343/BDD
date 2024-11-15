@@ -233,15 +233,16 @@ def insert_messages(num_records=100000):
 def insert_incident(num_records=5000):
     for _ in range(num_records):
         cur.execute("""
-            INSERT INTO Incident (ServerID, ServiceID, DateID, TimeID, IncidentDuration, Description)
-            VALUES (%s, %s, %s, %s, %s, %s)
+            INSERT INTO Incident (ServerID, ServiceID, DateID, TimeID, IncidentDuration, Description,SEVERITY)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
             """, (
             random.randint(1, 20),  # ServerID
             random.randint(1, 50),  # ServiceID
             random.randint(1, 365),  # DateID
             random.randint(1, 1000),  # TimeID
             timedelta(minutes=random.randint(1, 1440)),  # Incident duration up to 24 hours
-            fake.text()
+            fake.text(),
+            random.randint(0,4)
         ))
 
 # Main function to populate tables
@@ -256,6 +257,12 @@ def populate_database():
     conn.commit()
     insert_messages()
     insert_incident()
+    conn.commit()
+    #cur.execute("""REFRESH MATERIALIZED VIEW""")
+    cur.execute("""REFRESH MATERIALIZED VIEW groupByServiceAndFact""")
+    cur.execute("""REFRESH MATERIALIZED VIEW Incident_groupBy_Sev""")
+    cur.execute("""REFRESH MATERIALIZED VIEW TWENTYTHREEANDTWO""")
+    cur.execute("""REFRESH MATERIALIZED VIEW TOTAL_DUREE_INCIDENT_SERVICE""")
     conn.commit()
 
 populate_database()
